@@ -1,0 +1,89 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id       Int        @id @default(autoincrement())
+  name     String
+  username String     @unique
+  birth    DateTime
+  password String
+  tel      String     @unique
+  address  String
+  email    String     @unique
+  Game     Game[]
+  Cart     Cart[]
+  Order    Order[]
+  Favorite Favorite[]
+}
+
+model Game {
+  id          Int        @id @default(autoincrement())
+  name        String     @unique
+  release     DateTime
+  price       Float      @default(0)
+  video       String
+  description String
+  key         String     @unique
+  sales       Int        @default(0)
+  category    Category
+  User        User?      @relation(fields: [userId], references: [id])
+  userId      Int?
+  Order       Order[]
+  Cart        Cart[]
+  Favorite    Favorite[]
+}
+
+model Order {
+  id     Int   @id @default(autoincrement())
+  Bill   Bill?
+  User   User? @relation(fields: [userId], references: [id])
+  userId Int?
+  Game   Game? @relation(fields: [gameId], references: [id])
+  gameId Int?
+}
+
+model Favorite {
+  id     Int   @id @default(autoincrement())
+  Game   Game? @relation(fields: [gameId], references: [id])
+  gameId Int?
+  User   User? @relation(fields: [userId], references: [id])
+  userId Int?
+}
+
+model Cart {
+  id     Int   @id @default(autoincrement())
+  User   User? @relation(fields: [userId], references: [id])
+  userId Int?
+  Game   Game? @relation(fields: [gameId], references: [id])
+  gameId Int?
+}
+
+model Bill {
+  id      Int      @id @default(autoincrement())
+  price   Float    @default(0)
+  time    DateTime @default(now())
+  Order   Order    @relation(fields: [orderId], references: [id])
+  orderId Int      @unique
+}
+
+enum Category {
+  Action
+  Adventure
+  RPG
+  Racing
+  Cooking
+  Survival
+  Story
+  Horror
+}
+
+enum Role {
+  ADMIN
+  USER
+}
