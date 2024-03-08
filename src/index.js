@@ -1,5 +1,8 @@
 const cors = require("cors");
 const express = require("express");
+const auth = require("./middleware/auth");
+
+require("dotenv/config");
 
 const server = express();
 
@@ -19,7 +22,18 @@ server.use(
   })
 );
 
-server.use("/games", require("./routes/games"));
+server.use("/games", auth, require("./routes/games"));
+
+server.use("/auth", require("./routes/auth"));
+
+server.use("/user", auth, require("./routes/user"));
+
+server.use("/cart", auth, require("./routes/cart"));
+
+server.use("/favorite", auth, require("./routes/favorite"));
+
+server.use("/payment",auth,require("./routes/payment"));
+
 
 server.use((req, res) => {
   res.status(404).send({

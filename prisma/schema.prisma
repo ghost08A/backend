@@ -16,6 +16,7 @@ model User {
   tel      String     @unique
   address  String
   email    String     @unique
+  role     Role       @default(USER)
   Game     Game[]
   Cart     Cart[]
   Order    Order[]
@@ -34,6 +35,7 @@ model Game {
   category    Category
   User        User?      @relation(fields: [userId], references: [id])
   userId      Int?
+  image       String
   Order       Order[]
   Cart        Cart[]
   Favorite    Favorite[]

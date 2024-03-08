@@ -8,6 +8,7 @@ const route = Router();
 route.get("/", async (req, res) => {
   try {
     const games = await prisma.game.findMany();
+    //console.log(req.user);
 
     return res.send(games);
   } catch (e) {
@@ -50,17 +51,35 @@ route.get("/:id", async (req, res) => {
 });
 
 route.post("/", async (req, res) => {
-  const schema = Joi.object({
-    name: Joi.string().required(),
-    release: Joi.date().required(),
-    price: Joi.number().required(),
-    video: Joi.string().required(),
-    description: Joi.string().required(),
-    key: Joi.string().required(),
-    category: Joi.string().valid("Action", "Adventure").required(),
-  }).required();
+  const schema = Joi.array()
+    .required()
+    .items(
+      Joi.object({
+        name: Joi.string().required(),
+        release: Joi.date().required(),
+        price: Joi.number().required(),
+        video: Joi.string().required(),
+        image: Joi.string().required(),
+        description: Joi.string().required(),
+        key: Joi.string().required(),
+        category: Joi.string()
+          .valid(
+            "Action",
+            "Adventure",
+            "RPG",
+            "Racing",
+            "Cooking",
+            "Survival",
+            "Story",
+            "Horror"
+          )
+          .required(),
+      }).required()
+    );
 
   const { error, value } = schema.validate(req.body);
+
+  console.log(value);
 
   if (error) {
     return res.status(400).send({
@@ -69,12 +88,18 @@ route.post("/", async (req, res) => {
   }
 
   try {
-    const game = await prisma.game.create({
-      data: value,
+    const game = await prisma.game.createMany({
+      data: value.map((v) => {
+        return {
+          ...v,
+          userId: req.user.id,
+        };
+      }),
     });
 
     return res.send(game);
   } catch (e) {
+    console.log(e);
     if (e instanceof Prisma.PrismaClientKnownRequestError) {
       if (e.meta.target) {
         return res.status(400).send({
@@ -100,7 +125,18 @@ route.patch("/:id", async (req, res) => {
       video: Joi.string().required(),
       description: Joi.string().required(),
       key: Joi.string().required(),
-      category: Joi.string().valid("Action", "Adventure").required(),
+      category: Joi.string()
+        .valid(
+          "Action",
+          "Adventure",
+          "RPG",
+          "Racing",
+          "Cooking",
+          "Survival",
+          "Story",
+          "Horror"
+        )
+        .required(),
     }).required(),
   };
 
