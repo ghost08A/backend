@@ -43,11 +43,10 @@ route.get("/:id", async (req, res) => {
       body: Joi.object({
         name: Joi.string().required(),
         username: Joi.string().required(),
-        birth: Joi.date().required(),
         password: Joi.string().required(),
-        tel: Joi.string().required(),
-        address: Joi.string().required(),
+        tel: Joi.string().required(),  //edit
         email: Joi.string().required(),
+        profile: Joi.string().required(),
       }).required(),
     };
   

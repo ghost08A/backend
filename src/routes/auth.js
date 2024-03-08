@@ -12,24 +12,21 @@ route.post("/", async (req, res) => {
   const schema = Joi.object({
     name: Joi.string().required(),
     username: Joi.string().required(),
-    birth: Joi.date().required(),
     password: Joi.string().required(),
     tel: Joi.string().required(),
-    address: Joi.string().required(),
     email: Joi.string().required(),
   }).required();
 
   const { error, value } = schema.validate(req.body);
-  console.log(value);
+  
   const passwordhash = await bcrypt.hash(value.password, 10);
-
+  console.log(error);
   if (error) {
     return res.status(400).send({
       error: "Invalid body",
     });
   }
   
-
   try {
     const user = await prisma.user.create({  //create
       data: {

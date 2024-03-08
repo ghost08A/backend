@@ -61,7 +61,6 @@ route.post("/", async (req, res) => {
         video: Joi.string().required(),
         image: Joi.string().required(),
         description: Joi.string().required(),
-        key: Joi.string().required(),
         category: Joi.string()
           .valid(
             "Action",
@@ -77,7 +76,7 @@ route.post("/", async (req, res) => {
       }).required()
     );
 
-  const { error, value } = schema.validate(req.body);
+  const {error, value} = schema.validate(req.body);
 
   console.log(value);
 
@@ -120,28 +119,31 @@ route.patch("/:id", async (req, res) => {
     params: Joi.number().required(),
     body: Joi.object({
       name: Joi.string().required(),
-      release: Joi.date().required(),
-      price: Joi.number().required(),
-      video: Joi.string().required(),
-      description: Joi.string().required(),
-      key: Joi.string().required(),
-      category: Joi.string()
-        .valid(
-          "Action",
-          "Adventure",
-          "RPG",
-          "Racing",
-          "Cooking",
-          "Survival",
-          "Story",
-          "Horror"
-        )
-        .required(),
+        release: Joi.date().required(),
+        price: Joi.number().required(),
+        video: Joi.string().required(),
+        image: Joi.string().required(),
+        description: Joi.string().required(),
+        category: Joi.string()
+          .valid(
+            "Action",
+            "Adventure",
+            "RPG",
+            "Racing",
+            "Cooking",
+            "Survival",
+            "Story",
+            "Horror"
+          )
+          .required(),
+        image: Joi.string().required(),
     }).required(),
   };
 
   const params = schema.params.validate(req.params.id);
 
+  
+  
   if (params.error) {
     return res.status(400).send({
       error: "Invalid id",
@@ -161,6 +163,8 @@ route.patch("/:id", async (req, res) => {
   }
 
   const body = schema.body.validate(req.body);
+
+  console.log(body);
 
   if (body.error) {
     return res.status(400).send({
