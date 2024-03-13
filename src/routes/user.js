@@ -7,24 +7,37 @@ const path = require("path");
 const fs = require('fs');
 const { promisify } = require('util')
 const unlinkAsync = promisify(fs.unlink)
+const bcrypt = require('bcrypt')
+
 
 const route = Router();
 
-route.get("/:id", async (req, res) => {
-  const schema = Joi.number().required();
-
-  const { error, value } = schema.validate(req.params.id);
-
-  if (error) {
-    return res.status(400).send({
-      error: "Invalid id",
-    });
+route.get("/allUser",async (req,res)=>{ //ดูผู้ใช้ทั้งหมด
+  
+  if(req.user.role!=="ADMIN"){
+    return res.send({error:"You are not allowed to"})
+  }
+  try {
+    const user = await prisma.user.findMany()
+    if (!user) {
+      return res.status(404).send({
+        error: "user not found",
+      });
+  }
+  console.log(user);
+  return  res.send(user)
+  } catch (error) {
+    console.log(error);
+    return res.send(error)
   }
 
+});
+
+route.get("/", async (req, res) => { //ดูโปรไฟล์
   try {
     const user = await prisma.user.findUnique({
       where: {
-        id: value,
+        id: req.user.id,
       },
     });
 
@@ -42,32 +55,46 @@ route.get("/:id", async (req, res) => {
   }
 });
 
-route.patch("/:id", async (req, res) => {
-  const schema = {
-    params: Joi.number().required(),
-    body: Joi.object({
-      name: Joi.string().required(),
-      username: Joi.string().required(),
-      password: Joi.string().required(),
-      tel: Joi.string().required(), //edit
-      email: Joi.string().required(),
-      profile: Joi.string().required(),
-    }).required(),
-  };
-
-  const params = schema.params.validate(req.params.id);
-
-  if (params.error) {
-    return res.status(400).send({
-      error: "Invalid id",
-    });
+route.patch("/information", async (req, res) => {//แก้ไขข้อมูล
+  const schema = Joi.object({
+    name: Joi.string().required(),
+    username: Joi.string().required(),
+    email : Joi.string().required(),
+    tel: Joi.string().required(),
+  })
+  const {error, value} = schema.validate(req.body);
+  if(error){
+    console.log(error);
+    return res.status(400).send({error:"Invalid body"})
   }
-
+  try {
   const user = await prisma.user.findUnique({
     where: {
-      id: params.value,
+      id: req.user.id,
     },
   });
+  const check = await prisma.user.findFirst({
+    where: {
+        AND: [
+            {
+                OR: [
+                    { username: value.username },
+                    { email: value.email }
+                ]
+            },
+            {
+                NOT: {
+                    id: req.user.id
+                }
+            }
+        ]
+    }
+});
+  console.log(check);
+  if(check){
+    console.log(check);
+    return res.send({error:"There is duplicate username or email"})
+  }
 
   if (!user) {
     return res.status(404).send({
@@ -75,20 +102,11 @@ route.patch("/:id", async (req, res) => {
     });
   }
 
-  const body = schema.body.validate(req.body);
-
-  if (body.error) {
-    return res.status(400).send({
-      error: "Invalid body",
-    });
-  }
-
-  try {
     const updated = await prisma.user.update({
       where: {
-        id: params.value,
+        id: req.user.id,
       },
-      data: body.value,
+      data: value,
     });
 
     return res.send(updated);
@@ -101,14 +119,68 @@ route.patch("/:id", async (req, res) => {
         });
       }
     }
-
+    console.log(e);
     return res.status(500).send({
       error: "Internal Server Error",
     });
   }
 });
 
-route.delete("/:id", async (req, res) => {
+route.patch('/password',async (req, res) => { //เปลี่ยนรหัสผ่าน
+  const schema = Joi.object({
+    password: Joi.string().required(),
+    newpassword: Joi.string().required(),
+    Confirmpassword: Joi.string().required(),
+  }).required();
+  const { error, value } = schema.validate(req.body);
+  if (error) {
+    return res.status(400).send({
+      error: "Invalid body",
+    });
+  }
+
+  const user = await prisma.user.findFirst({
+    where:{
+      id: req.user.id
+    }
+  })
+  
+  try {
+    if(bcrypt.compareSync(value.password,user.password)){
+      if(value.newpassword===value.Confirmpassword){
+        const passwordhash = await bcrypt.hash(value.newpassword, 10);
+        const change = await prisma.user.update({
+          where: { id: req.user.id },
+          data: {password : passwordhash },
+        })
+        console.log(change)
+        return res.send({change})
+      }
+      else{
+        return res.send({error: "The new password doesn't match."})
+      }
+    }
+    else{
+      return res.send({error: "Wrong  password"})
+    }
+  } catch (e) { 
+    if (e instanceof Prisma.PrismaClientKnownRequestError) {//ให้รู้ว่าเป็นerrorของprisma
+      if (e.meta.target) {
+        return res.status(400).send({
+          error: "Duplicate field",
+          target: e.meta.target.split("_")[1],
+        });
+      }
+    }
+    console.log(e);
+    return res.status(500).send({
+      error: "Internal Server Error",
+    });
+  }
+  
+})
+
+route.delete("/:id", async (req, res) => { //ลบโปรไฟล์
   const schema = Joi.number().required();
 
   const { error, value } = schema.validate(req.params.id);
@@ -152,13 +224,18 @@ const storage = multer.diskStorage({
   },
 });
 const upload = multer({ storage, limits: { fileSize: 1000000 } });
-route.post("/photo", upload.single("photo"), async (req, res) => {
-  
-  console.log(req.file.path);
-
-  /*if(req.file && req.file.path){
-    await unlinkAsync(path.join(__dirname, "../../"+req.file.path))
-  }*/
+route.post("/photo", upload.single("photo"), async (req, res) => {//เพิ่มรูปโปรไฟล์
+  const user = await prisma.user.findUnique({
+    where:{
+      id: req.user.id,
+    }
+  })
+  console.log(user.profile);
+  try {
+    if(req.file && user.profile){
+    console.log(__dirname, "../../"+user.profile);
+    await unlinkAsync(path.join(__dirname, "../../"+user.profile))
+  }
   
   const updated = await prisma.user.update({
     where: {
@@ -168,11 +245,15 @@ route.post("/photo", upload.single("photo"), async (req, res) => {
       profile: req.file.path,
     },
   });
-  
+  console.log(updated);
   res.send(req.file);
+  } catch (error) {
+    console.log(error);
+    return res.send(error)
+  }
 });
 
-route.get("/", async (req, res) => {
+route.get("/profileUser", async (req, res) => {
   res.setHeader("Content-Type", "image/jpeg");
   const image = await prisma.user.findUnique({
     where: {id: req.user.id}

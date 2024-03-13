@@ -14,7 +14,7 @@ function gettoken(authorization) {
   return decode.id;
 }
 
-route.get("/", async (req, res) => {
+route.get("/", async (req, res) => { //ดูเกมทั้งหมด
   const { authorization } = req.headers;
   try {
     const games = await prisma.game.findMany({
@@ -36,7 +36,7 @@ route.get("/", async (req, res) => {
   }
 });
 
-route.get("/:id", async (req, res) => {
+route.get("/:id", async (req, res) => {//ดูเกม
   const schema = Joi.number().required();
   const { authorization } = req.headers;
   const { error, value } = schema.validate(req.params.id);
@@ -77,7 +77,7 @@ route.get("/:id", async (req, res) => {
   }
 });
 
-route.get("/search/:name", async (req, res) => {
+route.get("/search/:name", async (req, res) => {//search
   const schema = Joi.string().required();
   const { authorization } = req.headers;
   const { error, value } = schema.validate(req.params.name);
@@ -118,7 +118,7 @@ route.get("/search/:name", async (req, res) => {
   }
 });
 
-route.get("/category/:category", async (req, res) => {
+route.get("/category/:category", async (req, res) => {//category
   const schema = Joi.string()
     .valid(
       "Action",
@@ -176,11 +176,8 @@ route.get("/category/:category", async (req, res) => {
   }
 });
 
-route.post("/", auth,async (req, res) => {
-  const schema = Joi.array()
-    .required()
-    .items(
-      Joi.object({
+route.post("/", auth,async (req, res) => {//สร้างเกม
+  const schema = Joi.object({
         name: Joi.string().required(),
         release: Joi.date().required(),
         price: Joi.number().required(),
@@ -200,7 +197,7 @@ route.post("/", auth,async (req, res) => {
           )
           .required(),
       }).required()
-    );
+    
 
   const {error, value} = schema.validate(req.body);
 
@@ -211,15 +208,15 @@ route.post("/", auth,async (req, res) => {
       error: "Invalid body",
     });
   }
-
+ 
   try {
-    const game = await prisma.game.createMany({
-      data: value.map((v) => {
-        return {
-          ...v,
-          userId: req.user.id,
-        };
-      }),
+    const game = await prisma.game.create({
+      data: {
+        ...value, // ใช้ spread operator เพื่อนำค่าข้อมูลจาก value มาสร้าง
+        User: {
+          connect: { id: req.user.id } // เชื่อมโยงกับผู้ใช้โดยใช้ id
+        }
+      }
     });
 
     return res.send(game);
@@ -240,7 +237,7 @@ route.post("/", auth,async (req, res) => {
   }
 });
 
-route.patch("/:id",auth, async (req, res) => {
+/*route.patch("/:id",auth, async (req, res) => {//แก้ไขเกม
   const schema = {
     params: Joi.number().required(),
     body: Joi.object({
@@ -319,23 +316,23 @@ route.patch("/:id",auth, async (req, res) => {
       error: "Internal Server Error",
     });
   }
-});
+});*/
 
-route.delete("/:id", auth, async (req, res) => {
-  const schema = Joi.number().required();
+route.delete("/", auth, async (req, res) => {//ลบเกม
+  const schema = Joi.object({
+    gameId: Joi.number().required(),
+  }).required();
 
-  const { error, value } = schema.validate(req.params.id);
+  const { error, value } = schema.validate(req.body);
 
   if (error) {
-    return res.status(400).send({
-      error: "Invalid id",
-    });
+    return res.status(400).send({ error: "Invalid body" });
   }
 
   try {
     const game = await prisma.game.findUnique({
       where: {
-        id: value,
+        id: value.gameId,
       },
     });
 
@@ -347,7 +344,7 @@ route.delete("/:id", auth, async (req, res) => {
 
     const removed = await prisma.game.delete({
       where: {
-        id: value,
+        id: value.gameId,
       },
     });
 
@@ -356,6 +353,34 @@ route.delete("/:id", auth, async (req, res) => {
     return res.status(500).send({
       error: "Internal Server Error",
     });
+  }
+});
+
+route.patch('/confirm', auth , async (req, res) =>{ //ยืนยันเกม
+  const schema = Joi.object({
+    gameId: Joi.number().required(),
+  }).required();
+
+  const { error, value } = schema.validate(req.body);
+
+  if (error) {
+    return res.status(400).send({ error: "Invalid body" });
+  }
+
+  try {
+    const update = await prisma.game.update({
+      where: {
+        id: value.gameId,
+      },
+      data:{
+        publish:true
+      }
+    });
+
+    return res.send(update);
+  } catch (error) {
+    console.log(error);
+    return res.send(error);
   }
 });
 

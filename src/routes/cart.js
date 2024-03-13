@@ -56,14 +56,19 @@ route.post("/", async (req, res) => {
     });
     return res.send(cart);
   } catch (error) {
-    if (error instanceof Prisma.PrismaClientInitializationError) {
-      if (error.mata.target) {
+    console.log(e);
+    if (e instanceof Prisma.PrismaClientKnownRequestError) {
+      if (e.meta.target) {
         return res.status(400).send({
           error: "Duplicate field",
           target: e.meta.target.split("_")[1],
         });
       }
     }
+
+    return res.status(500).send({
+      error: "Internal Server Error",
+    });
   }
 });
 route.delete("/", async (req, res) => {

@@ -5,12 +5,93 @@ const { Prisma } = require("@prisma/client");
 
 const route = Router();
 
+route.get("/", async (req, res) => {
+    try {
+      const favorite = await prisma.favorite.findMany({
+        where: { userId: req.user.id },
+      });
+      return res.send(favorite);
+    } catch (e) {
+      console.log(e);
+      return res.status(500).send({
+        error: "Internal Service Error",
+      });
+    }
+  });
+
 route.post("/", async (req, res) => {
-  
+  const schema = Joi.object({
+    gameId: Joi.number().required(),
+  })
+  const {error,value} = schema.validate(req.body)
+
+  if(error){
+    return res.status(400).send({error: "Invalid body"});
+  }
+  const check = await prisma.favorite.findFirst({
+    where:{userId:req.user.id,
+    gameId:value.gameId}
+  })
+  console.log(req.user.id);
+  if(check){
+    return res.send({error: false})
+  }
+  try {
+    const favorite = await prisma.favorite.create({
+        data:{ 
+            gameId: value.gameId,
+            userId: req.user.id,
+        }
+    })
+    console.log(favorite);
+    return res.send(favorite);
+  } catch (error) {
+    console.log(e);
+    if (e instanceof Prisma.PrismaClientKnownRequestError) {
+      if (e.meta.target) {
+        return res.status(400).send({
+          error: "Duplicate field",
+          target: e.meta.target.split("_")[1],
+        });
+      }
+    }
+
+    return res.status(500).send({
+      error: "Internal Server Error",
+    });
+  }
 });
 
 route.delete("/", async (req, res) => {
-  
+    const schema = Joi.object({
+        gameId: Joi.number().required(),
+      }).required();
+      const { error, value } = schema.validate(req.body);
+      
+      if (error) {
+        return res.status(400).send({ error: "Invalid body" });
+      }
+      try { 
+        const favorite = await prisma.favorite.deleteMany({
+          where: {
+            userId: req.user.id,
+            gameId: value.gameId,
+          },
+        });
+        console.log(favorite);
+        return res.send(favorite);
+      } catch (error) {
+        if (error instanceof Prisma.PrismaClientInitializationError) {
+          if (error.mata.target) {
+            return res.status(400).send({
+              error: "Duplicate field",
+              target: e.meta.target.split("_")[1],
+            });
+          }
+        }
+        console.log(error);
+        return res.status(500).send({ error: "Internal Server Error" });
+      }
 });
 
 
