@@ -5,8 +5,12 @@ const { Prisma } = require("@prisma/client");
 
 const route = Router();
 
-route.get("/", async (req, res) => {
-  res.send("Asdadas");
+route.post("/", async (req, res) => {
+  
+});
+
+route.delete("/", async (req, res) => {
+  
 });
 
 

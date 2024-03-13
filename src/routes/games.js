@@ -9,11 +9,9 @@ const auth = require("../middleware/auth");
 const route = Router();
 
 function gettoken(authorization) {
-  //console.log(authorization);
   const token = authorization.split(" ")[1];
   const decode = jwt.verify(token, process.env.SECRET);
   return decode.id;
-   
 }
 
 route.get("/", async (req, res) => {
