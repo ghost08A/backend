@@ -324,7 +324,9 @@ route.delete("/", auth, async (req, res) => {//ลบเกม
   }).required();
 
   const { error, value } = schema.validate(req.body);
-
+  if(req.user.role!=="ADMIN"){
+    return res.send({error:"You are not allowed to"})
+  }
   if (error) {
     return res.status(400).send({ error: "Invalid body" });
   }
@@ -362,7 +364,10 @@ route.patch('/confirm', auth , async (req, res) =>{ //ยืนยันเก�
   }).required();
 
   const { error, value } = schema.validate(req.body);
-
+  if(req.user.role!=="ADMIN"){
+    return res.send({error:"You are not allowed to"})
+  }
+  
   if (error) {
     return res.status(400).send({ error: "Invalid body" });
   }

@@ -182,9 +182,7 @@ route.patch('/password',async (req, res) => { //เปลี่ยนรหั�
 
 route.delete("/:id", async (req, res) => { //ลบโปรไฟล์
   const schema = Joi.number().required();
-
   const { error, value } = schema.validate(req.params.id);
-
   if (error) {
     return res.status(400).send({
       error: "Invalid id",
