@@ -6,7 +6,7 @@ const jwt = require("jsonwebtoken");
 const route = Router();
 const auth = require("../middleware/auth");
 
-route.get("/", async (req, res) => {
+route.get("/", async (req, res) => {//ดูเกมในตะกร้า
   try {
     const cart = await prisma.cart.findMany({
       where: { userId: req.user.id },
@@ -20,7 +20,7 @@ route.get("/", async (req, res) => {
   }
 });
 
-route.post("/", async (req, res) => {
+route.post("/", async (req, res) => {//เพิ่มเกมในตะกร้า
   const schema = Joi.object({
     gameId: Joi.number().required(),
   }).required();
@@ -71,7 +71,7 @@ route.post("/", async (req, res) => {
     });
   }
 });
-route.delete("/", async (req, res) => {
+route.delete("/", async (req, res) => {////ลบเกมในตะกร้า
   const schema = Joi.object({
     gameId: Joi.number().required(),
   }).required();

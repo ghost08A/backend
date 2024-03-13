@@ -54,7 +54,7 @@ route.post("/", async (req, res) => {
 
 
 
-route.post("/login", async (req, res) => {
+route.post("/login", async (req, res) => {//login
   const schema = Joi.object({
     login: Joi.string().required(),
     password: Joi.string().required(),

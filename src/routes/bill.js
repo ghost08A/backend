@@ -8,7 +8,28 @@ const crypto = require("crypto");
 
 const route = Router();
 
-route.post("/", async (req, res) => {
+route.get('/',async (req,res) => { //ดูบิล
+  const order = await prisma.order.findMany({
+    where: {userId: req.user.id}
+  })
+  const billData = await Promise.all(order.map(async (v) => {
+    return prisma.bill.findFirst({
+      where: {orderId: v.id}
+    })
+  }))
+  console.log(billData);
+  return res.send(billData);
+})
+
+route.get('/order',async (req,res) => {//ดูorder
+  const order = await prisma.order.findMany({
+    where: {userId: req.user.id}
+  })
+  console.log(order);
+  return res.send(order);
+})
+
+route.post("/", async (req, res) => {//ซื่อเกมทีละเกม
   const schema = Joi.object({
     gameId: Joi.number().required(),
   }).required();
@@ -23,6 +44,11 @@ route.post("/", async (req, res) => {
   const game = await prisma.game.findUnique({
     where: { id: value.gameId },
   });
+  if(!game){
+    return res.status(404).send({
+      error: "Game not found",
+    });
+  }
   const check = await prisma.order.findFirst({
     where: {
       userId: req.user.id,
@@ -32,8 +58,19 @@ route.post("/", async (req, res) => {
   if(check){
     return res.send({ check: false });
   }
+  //let sales =game.sales+1;
+  const update = await prisma.game.update({
+    where: {
+      id: game.id,
+    },
+    data:{
+      sales:game.sales+1
+    }
+  });
   console.log(value);
   try {
+
+    
     const bill = await prisma.bill.create({
       data: {
         price: game.price,
@@ -62,7 +99,7 @@ route.post("/", async (req, res) => {
   }
 });
 
-route.post("/cart", async (req, res) => {
+route.post("/cart", async (req, res) => {//ซื้อเกมในตะกร้า
   try {
     const cart = await prisma.cart.findMany({
       where: { userId: req.user.id },
@@ -84,9 +121,16 @@ route.post("/cart", async (req, res) => {
         },
       });
       if(check){
-        return 
+        return res.send({check: false})
       }
-
+      const update = await prisma.game.update({
+        where: {
+          id: game.id,
+        },
+        data:{
+          sales:game.sales+1
+        }
+      });
       return prisma.bill.create({
         data: {
           price: game.price,

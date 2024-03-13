@@ -5,7 +5,7 @@ const { Prisma } = require("@prisma/client");
 
 const route = Router();
 
-route.get("/", async (req, res) => {
+route.get("/", async (req, res) => { //ดูเกมที่กดชอบไว้
     try {
       const favorite = await prisma.favorite.findMany({
         where: { userId: req.user.id },
@@ -19,7 +19,7 @@ route.get("/", async (req, res) => {
     }
   });
 
-route.post("/", async (req, res) => {
+route.post("/", async (req, res) => {//เพิ่มเกมที่ชอบ
   const schema = Joi.object({
     gameId: Joi.number().required(),
   })
@@ -62,7 +62,7 @@ route.post("/", async (req, res) => {
   }
 });
 
-route.delete("/", async (req, res) => {
+route.delete("/", async (req, res) => {//ลบเกมที่ชอบ
     const schema = Joi.object({
         gameId: Joi.number().required(),
       }).required();

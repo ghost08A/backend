@@ -367,7 +367,7 @@ route.patch('/confirm', auth , async (req, res) =>{ //ยืนยันเก�
   if(req.user.role!=="ADMIN"){
     return res.send({error:"You are not allowed to"})
   }
-  
+
   if (error) {
     return res.status(400).send({ error: "Invalid body" });
   }
@@ -391,17 +391,3 @@ route.patch('/confirm', auth , async (req, res) =>{ //ยืนยันเก�
 
 module.exports = route;
 
-/*const {authorization} = req.headers 
-
-    const games = await prisma.game.findMany({
-      where: {publish: true },
-    });
-    if (authorization) {
-      console.log(authorization);
-      const token = authorization.split(" ")[1];
-      const decode = jwt.verify(token,process.env.SECRET) 
-      const id = decode.id;
-    }
-      else{
-        console.log(1);
-      }*/
