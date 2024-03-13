@@ -22,11 +22,13 @@ server.use(
   })
 );
 
-server.use("/games", auth, require("./routes/games"));
+server.use("/games", require("./routes/games"));
+
+server.use("/bill",auth, require("./routes/bill"));
 
 server.use("/auth", require("./routes/auth"));
 
-server.use("/user", auth, require("./routes/user"));
+server.use("/user",auth,  require("./routes/user"));
 
 server.use("/cart", auth, require("./routes/cart"));
 

@@ -20,7 +20,7 @@ route.post("/", async (req, res) => {
   const { error, value } = schema.validate(req.body);
   
   const passwordhash = await bcrypt.hash(value.password, 10);
-  console.log(error);
+  //console.log(error);
   if (error) {
     return res.status(400).send({
       error: "Invalid body",
@@ -36,8 +36,8 @@ route.post("/", async (req, res) => {
     });
 
     return res.send(user);
-  } catch (e) {
-    if (e instanceof Prisma.PrismaClientKnownRequestError) {
+  } catch (e) { 
+    if (e instanceof Prisma.PrismaClientKnownRequestError) {//ให้รู้ว่าเป็นerrorของprisma
       if (e.meta.target) {
         return res.status(400).send({
           error: "Duplicate field",
@@ -55,7 +55,7 @@ route.post("/", async (req, res) => {
 
 route.post("/login", async (req, res) => {
   const schema = Joi.object({
-    username: Joi.string().required(),
+    login: Joi.string().required(),
     password: Joi.string().required(),
   }).required();
   const { error, value } = schema.validate(req.body);
@@ -65,10 +65,12 @@ route.post("/login", async (req, res) => {
       error: "Invalid body",
     });
   }
-  let { username, password } = value;
-  const existingUser = await prisma.user.findUnique({
-    where: {
-      username: username,
+  let { login, password } = value;
+  const existingUser = await prisma.user.findFirst({
+    where: {OR:[
+        {username: login},
+        {email:login}
+    ]
     },
   });
   

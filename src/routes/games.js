@@ -2,15 +2,35 @@ const Joi = require("joi");
 const { Router } = require("express");
 const { prisma } = require("../lib/prisma");
 const { Prisma } = require("@prisma/client");
+const jwt = require("jsonwebtoken");
+const auth = require("../middleware/auth");
+
 
 const route = Router();
 
-route.get("/", async (req, res) => {
-  try {
-    const games = await prisma.game.findMany();
-    //console.log(req.user);
+function gettoken(authorization) {
+  //console.log(authorization);
+  const token = authorization.split(" ")[1];
+  const decode = jwt.verify(token, process.env.SECRET);
+  return decode.id;
+   
+}
 
-    return res.send(games);
+route.get("/", async (req, res) => {
+  const { authorization } = req.headers;
+  try {
+    const games = await prisma.game.findMany({
+      where: { publish: true },
+    });
+    if (authorization) {
+      const id = gettoken(authorization);
+      const responseData = { games, id };
+
+      return res.send(responseData);
+    } else {
+      console.log(authorization);
+      return res.send(games);
+    }
   } catch (e) {
     return res.status(500).send({
       error: "Internal Service Error",
@@ -20,7 +40,7 @@ route.get("/", async (req, res) => {
 
 route.get("/:id", async (req, res) => {
   const schema = Joi.number().required();
-
+  const { authorization } = req.headers;
   const { error, value } = schema.validate(req.params.id);
 
   if (error) {
@@ -33,6 +53,7 @@ route.get("/:id", async (req, res) => {
     const game = await prisma.game.findUnique({
       where: {
         id: value,
+        publish: true,
       },
     });
 
@@ -42,15 +63,122 @@ route.get("/:id", async (req, res) => {
       });
     }
 
-    return res.send(game);
+    if (authorization) {
+      const id = gettoken(authorization);
+      const responseData = { game, id };
+      return res.send(responseData);
+    } else {
+      //console.log(authorization);
+      return res.send(game);
+    }
   } catch (e) {
+    console.log(e);
     return res.status(500).send({
       error: "Internal Service Error",
     });
   }
 });
 
-route.post("/", async (req, res) => {
+route.get("/search/:name", async (req, res) => {
+  const schema = Joi.string().required();
+  const { authorization } = req.headers;
+  const { error, value } = schema.validate(req.params.name);
+
+  if (error) {
+    return res.status(400).send({
+      error: "Invalid name",
+    });
+  }
+  try {
+    const game = await prisma.game.findMany({
+      where: {
+        name: {
+          contains: value,
+        },
+        publish: true,
+      },
+    });
+
+    if (!game || game.length === 0) {
+      return res.status(404).send({
+        error: "No games found matching the search criteria",
+      });
+    }
+    if (authorization) {
+      const id = gettoken(authorization);
+      const responseData = { game, id };
+      return res.send(responseData);
+    } else {
+      console.log(authorization);
+      return res.send(game);
+    }
+  } catch (e) {
+    console.log(e);
+    return res.status(500).send({
+      error: "Internal Server Error",
+    });
+  }
+});
+
+route.get("/category/:category", async (req, res) => {
+  const schema = Joi.string()
+    .valid(
+      "Action",
+      "Adventure",
+      "RPG",
+      "Racing",
+      "Cooking",
+      "Survival",
+      "Story",
+      "Horror"
+    )
+    .required();
+
+  const { error, value } = schema.validate(req.params.category);
+  const { authorization } = req.headers;
+  if (error) {
+    return res.status(400).send({
+      error: "Invalid category",
+    });
+  }
+
+  try {
+    const game = await prisma.game.findMany({
+      where: {
+        AND: [
+          {
+            category: value,
+          },
+          {
+            publish: true,
+          },
+        ],
+      },
+    });
+
+    if (!game || game.length === 0) {
+      return res.status(404).send({
+        error: "Games not found in this category",
+      });
+    }
+
+    if (authorization) {
+      const id = gettoken(authorization);
+      const responseData = { game, id };
+      return res.send(responseData);
+    } else {
+      console.log(authorization);
+      return res.send(game);
+    }
+  } catch (e) {
+    console.log(e);
+    return res.status(500).send({
+      error: "Internal Service Error",
+    });
+  }
+});
+
+route.post("/", auth,async (req, res) => {
   const schema = Joi.array()
     .required()
     .items(
@@ -114,7 +242,7 @@ route.post("/", async (req, res) => {
   }
 });
 
-route.patch("/:id", async (req, res) => {
+route.patch("/:id",auth, async (req, res) => {
   const schema = {
     params: Joi.number().required(),
     body: Joi.object({
@@ -142,8 +270,6 @@ route.patch("/:id", async (req, res) => {
 
   const params = schema.params.validate(req.params.id);
 
-  
-  
   if (params.error) {
     return res.status(400).send({
       error: "Invalid id",
@@ -197,7 +323,7 @@ route.patch("/:id", async (req, res) => {
   }
 });
 
-route.delete("/:id", async (req, res) => {
+route.delete("/:id", auth, async (req, res) => {
   const schema = Joi.number().required();
 
   const { error, value } = schema.validate(req.params.id);
@@ -236,3 +362,18 @@ route.delete("/:id", async (req, res) => {
 });
 
 module.exports = route;
+
+/*const {authorization} = req.headers 
+
+    const games = await prisma.game.findMany({
+      where: {publish: true },
+    });
+    if (authorization) {
+      console.log(authorization);
+      const token = authorization.split(" ")[1];
+      const decode = jwt.verify(token,process.env.SECRET) 
+      const id = decode.id;
+    }
+      else{
+        console.log(1);
+      }*/
