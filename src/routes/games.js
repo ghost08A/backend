@@ -237,15 +237,16 @@ route.post("/", auth,async (req, res) => {//สร้างเกม
   }
 });
 
-/*route.patch("/:id",auth, async (req, res) => {//แก้ไขเกม
-  const schema = {
-    params: Joi.number().required(),
-    body: Joi.object({
-      name: Joi.string().required(),
+route.patch("/",auth, async (req, res) => {//แก้ไขเกม
+  if(req.user.role!=="ADMIN"){
+    return res.send({error:"You are not allowed to"})
+  }
+  const schema =  Joi.object({
+        id: Joi.number().required(),
+        name: Joi.string().required(),
         release: Joi.date().required(),
         price: Joi.number().required(),
         video: Joi.string().required(),
-        image: Joi.string().required(),
         description: Joi.string().required(),
         category: Joi.string()
           .valid(
@@ -259,46 +260,33 @@ route.post("/", auth,async (req, res) => {//สร้างเกม
             "Horror"
           )
           .required(),
-        image: Joi.string().required(),
-    }).required(),
-  };
+    }).required()
+  
+  const {error, value} = schema.validate(req.body);
 
-  const params = schema.params.validate(req.params.id);
-
-  if (params.error) {
-    return res.status(400).send({
-      error: "Invalid id",
-    });
+  if(error){
+    console.log(error);
+    return res.status(400).send({error:"Invalid body"})
   }
 
   const game = await prisma.game.findUnique({
     where: {
-      id: params.value,
+      id: value.id,
     },
   });
-
+  console.log(value);
   if (!game) {
     return res.status(404).send({
       error: "Game not found",
     });
   }
 
-  const body = schema.body.validate(req.body);
-
-  console.log(body);
-
-  if (body.error) {
-    return res.status(400).send({
-      error: "Invalid body",
-    });
-  }
-
   try {
     const updated = await prisma.game.update({
       where: {
-        id: params.value,
+        id: game.id,
       },
-      data: body.value,
+      data: value,
     });
 
     return res.send(updated);
@@ -316,7 +304,7 @@ route.post("/", auth,async (req, res) => {//สร้างเกม
       error: "Internal Server Error",
     });
   }
-});*/
+});
 
 route.delete("/", auth, async (req, res) => {//ลบเกม
   const schema = Joi.object({

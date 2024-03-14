@@ -73,24 +73,20 @@ route.patch("/information", async (req, res) => {//แก้ไขข้อม�
       id: req.user.id,
     },
   });
+  console.log(value);
   const check = await prisma.user.findFirst({
     where: {
-        AND: [
-            {
-                OR: [
-                    { username: value.username },
-                    { email: value.email }
-                ]
-            },
-            {
-                NOT: {
-                    id: req.user.id
-                }
-            }
-        ]
+        OR: [
+            { username: value.username },
+            { email: value.email }
+        ],
+        NOT: {
+            id: req.user.id
+        }
     }
 });
-  console.log(check);
+
+  //console.log(check);
   if(check){
     console.log(check);
     return res.send({error:"There is duplicate username or email"})
@@ -111,18 +107,8 @@ route.patch("/information", async (req, res) => {//แก้ไขข้อม�
 
     return res.send(updated);
   } catch (e) {
-    if (e instanceof Prisma.PrismaClientKnownRequestError) {
-      if (e.meta.target) {
-        return res.status(400).send({
-          error: "Duplicate field",
-          target: e.meta.target.split("_")[1],
-        });
-      }
-    }
     console.log(e);
-    return res.status(500).send({
-      error: "Internal Server Error",
-    });
+    return res.send({e});
   }
 });
 
@@ -180,9 +166,15 @@ route.patch('/password',async (req, res) => { //เปลี่ยนรหั�
   
 })
 
-route.delete("/:id", async (req, res) => { //ลบโปรไฟล์
-  const schema = Joi.number().required();
-  const { error, value } = schema.validate(req.params.id);
+route.delete("/", async (req, res) => { //ลบโปรไฟล์
+  if(req.user.role!=="ADMIN"){
+    return res.send({error:"You are not allowed to"})
+  }
+  
+  const schema = Joi.object({
+    id: Joi.number().required(),
+  }).required();
+  const { error, value } = schema.validate(req.body);
   if (error) {
     return res.status(400).send({
       error: "Invalid id",
@@ -192,7 +184,7 @@ route.delete("/:id", async (req, res) => { //ลบโปรไฟล์
   try {
     const user = await prisma.user.findUnique({
       where: {
-        id: value,
+        id: value.id,
       },
     });
 
@@ -204,7 +196,7 @@ route.delete("/:id", async (req, res) => { //ลบโปรไฟล์
 
     const removed = await prisma.user.delete({
       where: {
-        id: value,
+        id: user.id,
       },
     });
 
@@ -222,7 +214,7 @@ const storage = multer.diskStorage({
   },
 });
 const upload = multer({ storage, limits: { fileSize: 1000000 } });
-route.post("/photo", upload.single("photo"), async (req, res) => {//เพิ่มรูปโปรไฟล์
+route.post("/photo", upload.single("photo"), async (req, res) => {//เพิ่มรูปโปรไฟล์ ต้องใส่keyเป็นphoto นะ
   const user = await prisma.user.findUnique({
     where:{
       id: req.user.id,
