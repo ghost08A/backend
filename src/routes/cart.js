@@ -43,7 +43,14 @@ route.post("/", async (req, res) => {//เพิ่มเกมในตะก�
       gameId: value.gameId,
     },
   });
-  if (checkOder || checkCart) {
+
+  const checkgame = await prisma.game.findFirst({
+    where: {
+      id: value.gameId,
+    },
+  });
+
+  if (checkOder || checkCart || !checkgame) {
     return res.send({ check: false });
   }
 
@@ -56,21 +63,11 @@ route.post("/", async (req, res) => {//เพิ่มเกมในตะก�
     });
     return res.send(cart);
   } catch (error) {
-    console.log(e);
-    if (e instanceof Prisma.PrismaClientKnownRequestError) {
-      if (e.meta.target) {
-        return res.status(400).send({
-          error: "Duplicate field",
-          target: e.meta.target.split("_")[1],
-        });
-      }
-    }
-
-    return res.status(500).send({
-      error: "Internal Server Error",
-    });
+    console.log(error);
+    return res.send({ error: error});
   }
 });
+
 route.delete("/", async (req, res) => {////ลบเกมในตะกร้า
   const schema = Joi.object({
     gameId: Joi.number().required(),

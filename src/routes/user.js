@@ -74,22 +74,46 @@ route.patch("/information", async (req, res) => {//แก้ไขข้อม�
     },
   });
   console.log(value);
-  const check = await prisma.user.findFirst({
+  const checkusername = await prisma.user.findFirst({
     where: {
-        OR: [
-            { username: value.username },
-            { email: value.email }
-        ],
-        NOT: {
-            id: req.user.id
-        }
+      username: value.username,
+      NOT: {
+        id: req.user.id
+      }
+        
     }
 });
 
-  //console.log(check);
-  if(check){
-    console.log(check);
-    return res.send({error:"There is duplicate username or email"})
+const checkemail = await prisma.user.findFirst({
+  where: {
+    email: value.email,
+    NOT: {
+      id: req.user.id
+    }
+  }
+});
+
+const checktel = await prisma.user.findFirst({
+  where: {
+    tel: value.tel,
+    NOT: {
+      id: req.user.id
+    }
+  }
+});
+
+  if(checkusername){
+    console.log(checkusername);
+    return res.send({error:"There is duplicate username"})
+  }
+
+  if(checkemail){
+    console.log(checkemail);
+    return res.send({error:"There is duplicate email"})
+  }
+  if(checktel){
+    console.log(checktel);
+    return res.send({error:"There is duplicate phone"})
   }
 
   if (!user) {
@@ -213,7 +237,10 @@ const storage = multer.diskStorage({
     callback(null, "./uploads/users");
   },
 });
+
+
 const upload = multer({ storage, limits: { fileSize: 1000000 } });
+
 route.post("/photo", upload.single("photo"), async (req, res) => {//เพิ่มรูปโปรไฟล์ ต้องใส่keyเป็นphoto นะ
   const user = await prisma.user.findUnique({
     where:{
@@ -252,5 +279,83 @@ route.get("/profileUser", async (req, res) => {
   res.sendFile(path.join(__dirname, "../../"+image.profile));
 });
 
+route.post("/report", async (req, res) => {//ส่งปัญหา
+  const schema = Joi.object({
+    problemType: Joi.string().required(),
+    details: Joi.string().required(),
+    comment: Joi.string().required()
+  })
+  const {error,value} = schema.validate(req.body)
+  
+  if(error){
+    console.log(error);
+    return res.status(400).send({error:"Invalid body"})
+  }
+  try {
+    const report = await prisma.report.create({
+      data:{
+        ...value,
+        userId: req.user.id,
+      }
+    })
+    return res.send(report);
+
+  } catch (error) {
+    console.log(error);
+    return res.send(error);
+  }
+})
+
+route.get("/report",async (req,res) =>{//ดูที่ปัญหา
+  if(req.user.role!=="ADMIN"){
+    return res.send({error:"You are not allowed to"})
+  }
+
+  try {
+    const report = await prisma.report.findMany({
+      //where:{update: false,} 
+    })
+    if (!report) {
+      return res.status(404).send({
+        error: "user not found",
+      });
+  }
+  console.log(report);
+  return  res.send(report)
+  } catch (report) {
+    console.log(report);
+    return res.send(report)
+  }
+})
+
+route.patch("/update",async (req, res) => { //admin แก้ไขแล้ว
+  if(req.user.role!=="ADMIN"){
+    return res.send({error:"You are not allowed to"})
+  }
+
+  const schema = Joi.object({
+    reportId: Joi.number().required(),
+  }).required();
+  const { error, value } = schema.validate(req.body);
+  if (error) {
+    return res.status(400).send({ error: "Invalid body" });
+  }
+  try {
+    const report = await prisma.report.update({
+      where: {
+        id: value.reportId,
+      },
+      data:{
+        update:true
+      }
+    });
+
+    return res.send(report);
+  } catch (report) {
+    console.log(error);
+    return res.send(error);
+  }
+
+})
 
 module.exports = route;

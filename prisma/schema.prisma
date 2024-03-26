@@ -20,6 +20,7 @@ model User {
   Cart     Cart[]
   Order    Order[]
   Favorite Favorite[]
+  Report   Report[]
 }
 
 model Game {
@@ -72,6 +73,16 @@ model Bill {
   time    DateTime @default(now())
   Order   Order?   @relation(fields: [orderId], references: [id])
   orderId Int?     @unique
+}
+
+model Report {
+  id          Int     @id @default(autoincrement())
+  User        User    @relation(fields: [userId], references: [id])
+  userId      Int
+  problemType String
+  details     String
+  comment     String?
+  update      Boolean @default(false)
 }
 
 enum Category {
