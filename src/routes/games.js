@@ -21,10 +21,8 @@ route.get("/", async (req, res) => { //ดูเกมทั้งหมด
       where: { publish: true },
     });
     if (authorization) {
-      const id = gettoken(authorization);
-      const responseData = { games, id };
-
-      return res.send(responseData);
+      const id = gettoken(authorization)
+      return res.send(games);
     } else {
       console.log(authorization);
       return res.send(games);
@@ -63,8 +61,7 @@ route.get("/:id", async (req, res) => {//ดูเกม
 
     if (authorization) {
       const id = gettoken(authorization);
-      const responseData = { game, id };
-      return res.send(responseData);
+      return res.send(game);
     } else {
       //console.log(authorization);
       return res.send(game);
@@ -104,8 +101,8 @@ route.get("/search/:name", async (req, res) => {//search
     }
     if (authorization) {
       const id = gettoken(authorization);
-      const responseData = { game, id };
-      return res.send(responseData);
+      
+      return res.send(game);
     } else {
       console.log(authorization);
       return res.send(game);
@@ -162,8 +159,7 @@ route.get("/category/:category", async (req, res) => {//category
 
     if (authorization) {
       const id = gettoken(authorization);
-      const responseData = { game, id };
-      return res.send(responseData);
+      return res.send(game);
     } else {
       console.log(authorization);
       return res.send(game);
