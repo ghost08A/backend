@@ -313,7 +313,7 @@ route.get("/report",async (req,res) =>{//ดูที่ปัญหา
 
   try {
     const report = await prisma.report.findMany({
-      //where:{update: false,} 
+      where:{update: false,} 
     })
     if (!report) {
       return res.status(404).send({
