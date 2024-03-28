@@ -5,7 +5,6 @@ const { Prisma } = require("@prisma/client");
 const jwt = require("jsonwebtoken");
 const auth = require("../middleware/auth");
 
-
 const route = Router();
 
 function gettoken(authorization) {
@@ -14,14 +13,15 @@ function gettoken(authorization) {
   return decode.id;
 }
 
-route.get("/", async (req, res) => { //ดูเกมทั้งหมด
+route.get("/", async (req, res) => {
+  //ดูเกมทั้งหมด
   const { authorization } = req.headers;
   try {
     const games = await prisma.game.findMany({
       where: { publish: true },
     });
     if (authorization) {
-      const id = gettoken(authorization)
+      const id = gettoken(authorization);
       return res.send(games);
     } else {
       console.log(authorization);
@@ -34,7 +34,8 @@ route.get("/", async (req, res) => { //ดูเกมทั้งหมด
   }
 });
 
-route.get("/:id", async (req, res) => {//ดูเกม
+route.get("/:id", async (req, res) => {
+  //ดูเกม
   const schema = Joi.number().required();
   const { authorization } = req.headers;
   const { error, value } = schema.validate(req.params.id);
@@ -61,10 +62,10 @@ route.get("/:id", async (req, res) => {//ดูเกม
 
     if (authorization) {
       const id = gettoken(authorization);
-      return res.send(game);
+      return res.send({ game });
     } else {
       //console.log(authorization);
-      return res.send(game);
+      return res.send({ game });
     }
   } catch (e) {
     console.log(e);
@@ -74,7 +75,8 @@ route.get("/:id", async (req, res) => {//ดูเกม
   }
 });
 
-route.get("/search/:name", async (req, res) => {//search
+route.get("/search/:name", async (req, res) => {
+  //search
   const schema = Joi.string().required();
   const { authorization } = req.headers;
   const { error, value } = schema.validate(req.params.name);
@@ -101,7 +103,7 @@ route.get("/search/:name", async (req, res) => {//search
     }
     if (authorization) {
       const id = gettoken(authorization);
-      
+
       return res.send(game);
     } else {
       console.log(authorization);
@@ -115,7 +117,8 @@ route.get("/search/:name", async (req, res) => {//search
   }
 });
 
-route.get("/category/:category", async (req, res) => {//category
+route.get("/category/:category", async (req, res) => {
+  //category
   const schema = Joi.string()
     .valid(
       "Action",
@@ -172,30 +175,30 @@ route.get("/category/:category", async (req, res) => {//category
   }
 });
 
-route.post("/", auth,async (req, res) => {//สร้างเกม
+route.post("/", auth, async (req, res) => {
+  //สร้างเกม
   const schema = Joi.object({
-        name: Joi.string().required(),
-        release: Joi.date().required(),
-        price: Joi.number().required(),
-        video: Joi.string().required(),
-        image: Joi.string().required(),
-        description: Joi.string().required(),
-        category: Joi.string()
-          .valid(
-            "Action",
-            "Adventure",
-            "RPG",
-            "Racing",
-            "Cooking",
-            "Survival",
-            "Story",
-            "Horror"
-          )
-          .required(),
-      }).required()
-    
+    name: Joi.string().required(),
+    release: Joi.date().required(),
+    price: Joi.number().required(),
+    video: Joi.string().required(),
+    image: Joi.string().required(),
+    description: Joi.string().required(),
+    category: Joi.string()
+      .valid(
+        "Action",
+        "Adventure",
+        "RPG",
+        "Racing",
+        "Cooking",
+        "Survival",
+        "Story",
+        "Horror"
+      )
+      .required(),
+  }).required();
 
-  const {error, value} = schema.validate(req.body);
+  const { error, value } = schema.validate(req.body);
 
   console.log(value);
 
@@ -204,15 +207,15 @@ route.post("/", auth,async (req, res) => {//สร้างเกม
       error: "Invalid body",
     });
   }
- 
+
   try {
     const game = await prisma.game.create({
       data: {
         ...value, // ใช้ spread operator เพื่อนำค่าข้อมูลจาก value มาสร้าง
         User: {
-          connect: { id: req.user.id } // เชื่อมโยงกับผู้ใช้โดยใช้ id
-        }
-      }
+          connect: { id: req.user.id }, // เชื่อมโยงกับผู้ใช้โดยใช้ id
+        },
+      },
     });
 
     return res.send(game);
@@ -233,36 +236,37 @@ route.post("/", auth,async (req, res) => {//สร้างเกม
   }
 });
 
-route.patch("/",auth, async (req, res) => {//แก้ไขเกม
-  if(req.user.role!=="ADMIN"){
-    return res.send({error:"You are not allowed to"})
+route.patch("/", auth, async (req, res) => {
+  //แก้ไขเกม
+  if (req.user.role !== "ADMIN") {
+    return res.send({ error: "You are not allowed to" });
   }
-  const schema =  Joi.object({
-        id: Joi.number().required(),
-        name: Joi.string().required(),
-        release: Joi.date().required(),
-        price: Joi.number().required(),
-        video: Joi.string().required(),
-        description: Joi.string().required(),
-        category: Joi.string()
-          .valid(
-            "Action",
-            "Adventure",
-            "RPG",
-            "Racing",
-            "Cooking",
-            "Survival",
-            "Story",
-            "Horror"
-          )
-          .required(),
-    }).required()
-  
-  const {error, value} = schema.validate(req.body);
+  const schema = Joi.object({
+    id: Joi.number().required(),
+    name: Joi.string().required(),
+    release: Joi.date().required(),
+    price: Joi.number().required(),
+    video: Joi.string().required(),
+    description: Joi.string().required(),
+    category: Joi.string()
+      .valid(
+        "Action",
+        "Adventure",
+        "RPG",
+        "Racing",
+        "Cooking",
+        "Survival",
+        "Story",
+        "Horror"
+      )
+      .required(),
+  }).required();
 
-  if(error){
+  const { error, value } = schema.validate(req.body);
+
+  if (error) {
     console.log(error);
-    return res.status(400).send({error:"Invalid body"})
+    return res.status(400).send({ error: "Invalid body" });
   }
 
   const game = await prisma.game.findUnique({
@@ -302,14 +306,15 @@ route.patch("/",auth, async (req, res) => {//แก้ไขเกม
   }
 });
 
-route.delete("/", auth, async (req, res) => {//ลบเกม
+route.delete("/", auth, async (req, res) => {
+  //ลบเกม
   const schema = Joi.object({
     gameId: Joi.number().required(),
   }).required();
 
   const { error, value } = schema.validate(req.body);
-  if(req.user.role!=="ADMIN"){
-    return res.send({error:"You are not allowed to"})
+  if (req.user.role !== "ADMIN") {
+    return res.send({ error: "You are not allowed to" });
   }
   if (error) {
     return res.status(400).send({ error: "Invalid body" });
@@ -342,14 +347,15 @@ route.delete("/", auth, async (req, res) => {//ลบเกม
   }
 });
 
-route.patch('/confirm', auth , async (req, res) =>{ //ยืนยันเกม
+route.patch("/confirm", auth, async (req, res) => {
+  //ยืนยันเกม
   const schema = Joi.object({
     gameId: Joi.number().required(),
   }).required();
 
   const { error, value } = schema.validate(req.body);
-  if(req.user.role!=="ADMIN"){
-    return res.send({error:"You are not allowed to"})
+  if (req.user.role !== "ADMIN") {
+    return res.send({ error: "You are not allowed to" });
   }
 
   if (error) {
@@ -361,9 +367,9 @@ route.patch('/confirm', auth , async (req, res) =>{ //ยืนยันเก�
       where: {
         id: value.gameId,
       },
-      data:{
-        publish:true
-      }
+      data: {
+        publish: true,
+      },
     });
 
     return res.send(update);
@@ -374,4 +380,3 @@ route.patch('/confirm', auth , async (req, res) =>{ //ยืนยันเก�
 });
 
 module.exports = route;
-

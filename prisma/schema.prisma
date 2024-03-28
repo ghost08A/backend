@@ -21,6 +21,7 @@ model User {
   Order    Order[]
   Favorite Favorite[]
   Report   Report[]
+  Tokenemail Tokenemail[]
 }
 
 model Game {
@@ -83,6 +84,13 @@ model Report {
   details     String
   comment     String?
   update      Boolean @default(false)
+}
+ 
+model Tokenemail {
+  id      Int     @id @default(autoincrement())
+  User    User    @relation(fields: [userId],references: [id])
+  userId  Int    
+  tokenId String
 }
 
 enum Category {
