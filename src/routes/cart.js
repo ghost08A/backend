@@ -6,7 +6,8 @@ const jwt = require("jsonwebtoken");
 const route = Router();
 const auth = require("../middleware/auth");
 
-route.get("/", async (req, res) => {//ดูเกมในตะกร้า
+route.get("/", async (req, res) => {
+  //ดูเกมในตะกร้า
   try {
     const cart = await prisma.cart.findMany({
       where: { userId: req.user.id },
@@ -20,7 +21,8 @@ route.get("/", async (req, res) => {//ดูเกมในตะกร้า
   }
 });
 
-route.post("/", async (req, res) => {//เพิ่มเกมในตะกร้า
+route.post("/", async (req, res) => {
+  //เพิ่มเกมในตะกร้า
   const schema = Joi.object({
     gameId: Joi.number().required(),
   }).required();
@@ -64,22 +66,23 @@ route.post("/", async (req, res) => {//เพิ่มเกมในตะก�
     return res.send(cart);
   } catch (error) {
     console.log(error);
-    return res.send({ error: error});
+    return res.send({ error: error });
   }
 });
 
-route.delete("/", async (req, res) => {////ลบเกมในตะกร้า
+route.delete("/", async (req, res) => {
+  ////ลบเกมในตะกร้า
   const schema = Joi.object({
     gameId: Joi.number().required(),
   }).required();
   const { error, value } = schema.validate(req.body);
-  
+
   if (error) {
     return res.status(400).send({ error: "Invalid body" });
   }
   try {
     console.log(value);
-    
+
     const cart = await prisma.cart.deleteMany({
       where: {
         userId: req.user.id,
@@ -100,7 +103,6 @@ route.delete("/", async (req, res) => {////ลบเกมในตะกร้�
     console.log(error);
     return res.status(500).send({ error: "Internal Server Error" });
   }
-  
 });
 
 module.exports = route;
