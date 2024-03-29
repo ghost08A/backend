@@ -58,6 +58,12 @@ route.post("/", async (req, res) => {//ซื่อเกมทีละเก�
   if(check){
     return res.send({ check: false });
   }
+  await prisma.cart.deleteMany({
+    where: {
+      userId: req.user.id,
+      gameId: game.id,
+    },
+  });
   //let sales =game.sales+1;
   const update = await prisma.game.update({
     where: {

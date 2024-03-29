@@ -191,9 +191,9 @@ route.patch("/password", async (req, res) => {
 
 route.delete("/", async (req, res) => {
   //ลบโปรไฟล์
-  if (req.user.role !== "ADMIN") {
+  /*if (req.user.role !== "ADMIN") {
     return res.send({ error: "You are not allowed to" });
-  }
+  }*/
 
   const schema = Joi.object({
     id: Joi.number().required(),

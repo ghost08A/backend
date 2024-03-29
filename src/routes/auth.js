@@ -163,6 +163,7 @@ route.get("/verify/:id/:token", async (req, res) => {
     });
 
     if (!token) return res.status(400).send("Invalid link");
+    
     await prisma.tokenemail.deleteMany({
       where: {
         userId: parseInt(req.params.id),
