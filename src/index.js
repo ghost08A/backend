@@ -24,18 +24,17 @@ server.use(
 
 server.use("/games", require("./routes/games"));
 
-server.use("/bill",auth, require("./routes/bill"));
+server.use("/bill", auth, require("./routes/bill"));
 
 server.use("/auth", require("./routes/auth"));
 
-server.use("/user",auth,  require("./routes/user"));
+server.use("/user", auth, require("./routes/user"));
 
 server.use("/cart", auth, require("./routes/cart"));
 
 server.use("/favorite", auth, require("./routes/favorite"));
 
-server.use("/payment",auth,require("./routes/payment"));
-
+server.use("/payment", auth, require("./routes/payment"));
 
 server.use((req, res) => {
   res.status(404).send({

@@ -34,6 +34,27 @@ route.get("/", async (req, res) => {
   }
 });
 
+route.get("/s", async (req, res) => {
+  //ดูเกมทั้งหมด
+  const { authorization } = req.headers;
+  try {
+    const games = await prisma.game.findMany({
+      where: { publish: false },
+    });
+    if (authorization) {
+      const id = gettoken(authorization);
+      return res.send(games);
+    } else {
+      console.log(authorization);
+      return res.send(games);
+    }
+  } catch (e) {
+    return res.status(500).send({
+      error: "Internal Service Error",
+    });
+  }
+});
+
 route.get("/:id", async (req, res) => {
   //ดูเกม
   const schema = Joi.number().required();

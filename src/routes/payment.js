@@ -38,16 +38,16 @@ route.get("/", async (req, res) => {
     res.status(500).send("Internal  { amount: amounts }Server Error");
   }
 });
-route.get("/game", async (req, res) => {
+route.get("/game/:gameId", async (req, res) => {
   try {
     const schema = Joi.object({
       gameId: Joi.number().required(),
     }).required();
 
-    const { error, value } = schema.validate(req.body);
+    const { error, value } = schema.validate(req.params);
 
     if (error) {
-      return res.status(400).send({ error: "Invalid body" });
+      return res.status(400).send({ error: "Invalid parameters" });
     }
 
     const game = await prisma.game.findUnique({
@@ -61,12 +61,13 @@ route.get("/game", async (req, res) => {
 
     let amounts = parseFloat(game.price);
 
+    // Generate the payload
     const payload = await generatePayload(mobileNumber, { amount: amounts });
 
     return res.send(payload);
   } catch (err) {
     console.error(err);
-    res.status(500).send("Internal  { amount: amounts }Server Error");
+    res.status(500).send("Internal Server Error");
   }
 });
 module.exports = route;

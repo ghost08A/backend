@@ -8,28 +8,81 @@ const crypto = require("crypto");
 
 const route = Router();
 
-route.get('/',async (req,res) => { //ดูบิล
+route.get("/", async (req, res) => {
+  //ดูบิล
   const order = await prisma.order.findMany({
-    where: {userId: req.user.id}
-  })
-  const billData = await Promise.all(order.map(async (v) => {
-    return prisma.bill.findFirst({
-      where: {orderId: v.id}
+    where: { userId: req.user.id },
+  });
+  const billData = await Promise.all(
+    order.map(async (v) => {
+      return prisma.bill.findFirst({
+        where: { orderId: v.id },
+      });
     })
-  }))
+  );
   console.log(billData);
   return res.send(billData);
-})
+});
 
-route.get('/order',async (req,res) => {//ดูorder
+route.get("/order/:id", async (req, res) => {
+  try {
+    const schema = Joi.number().required();
+    const { error, value } = schema.validate(req.params.id);
+    if (error) {
+      return res.status(400).send({ error: "Invalid id" });
+    }
+    // Assuming `order` is the name of the model representing orders
+    const order = await prisma.order.findUnique({
+      where: { id: parseInt(value), userId: req.user.id },
+      include: {
+        Game: true, // Include the related game data
+      },
+    });
+    if (!order) {
+      return res.status(404).send({ error: "Order not found" });
+    }
+    console.log(order);
+    return res.send(order);
+  } catch (error) {
+    console.error(error);
+    res.status(500).send("Internal Server Error");
+  }
+});
+
+// Route to retrieve a bill by ID
+route.get("/:id", async (req, res) => {
+  try {
+    const schema = Joi.number().required();
+    const { error, value } = schema.validate(req.params.id);
+    if (error) {
+      return res.status(400).send({ error: "Invalid id" });
+    }
+    // Assuming `bill` is the name of the model representing bills
+    const bills = await prisma.bill.findUnique({
+      where: { id: parseInt(value) },
+    });
+    if (!bills) {
+      return res.status(404).send({ error: "Bill not found" });
+    }
+    console.log(bills);
+    return res.send(bills);
+  } catch (error) {
+    console.error(error);
+    res.status(500).send("Internal Server Error");
+  }
+});
+
+route.get("/orders", async (req, res) => {
+  //ดูorder
   const order = await prisma.order.findMany({
-    where: {userId: req.user.id}
-  })
+    where: { userId: req.user.id },
+  });
   console.log(order);
   return res.send(order);
-})
+});
 
-route.post("/", async (req, res) => {//ซื่อเกมทีละเกม
+route.post("/", async (req, res) => {
+  //ซื่อเกมทีละเกม
   const schema = Joi.object({
     gameId: Joi.number().required(),
   }).required();
@@ -44,7 +97,7 @@ route.post("/", async (req, res) => {//ซื่อเกมทีละเก�
   const game = await prisma.game.findUnique({
     where: { id: value.gameId },
   });
-  if(!game){
+  if (!game) {
     return res.status(404).send({
       error: "Game not found",
     });
@@ -55,7 +108,7 @@ route.post("/", async (req, res) => {//ซื่อเกมทีละเก�
       gameId: game.id,
     },
   });
-  if(check){
+  if (check) {
     return res.send({ check: false });
   }
   await prisma.cart.deleteMany({
@@ -69,14 +122,12 @@ route.post("/", async (req, res) => {//ซื่อเกมทีละเก�
     where: {
       id: game.id,
     },
-    data:{
-      sales:game.sales+1
-    }
+    data: {
+      sales: game.sales + 1,
+    },
   });
   console.log(value);
   try {
-
-    
     const bill = await prisma.bill.create({
       data: {
         price: game.price,
@@ -105,51 +156,54 @@ route.post("/", async (req, res) => {//ซื่อเกมทีละเก�
   }
 });
 
-route.post("/cart", async (req, res) => {//ซื้อเกมในตะกร้า
+route.post("/cart", async (req, res) => {
+  //ซื้อเกมในตะกร้า
   try {
     const cart = await prisma.cart.findMany({
       where: { userId: req.user.id },
     });
 
-    const billData = await Promise.all(cart.map(async (v) => {
-      const key = crypto.randomBytes(20).toString("hex");
-      const game = await prisma.game.findUnique({
-        where: { id: v.gameId },
-      });
+    const billData = await Promise.all(
+      cart.map(async (v) => {
+        const key = crypto.randomBytes(20).toString("hex");
+        const game = await prisma.game.findUnique({
+          where: { id: v.gameId },
+        });
 
-      await prisma.cart.delete({
-        where: { id: v.id },
-      });
-      const check = await prisma.order.findFirst({
-        where: {
-          userId: req.user.id,
-          gameId: game.id,
-        },
-      });
-      if(check){
-        return res.send({check: false})
-      }
-      const update = await prisma.game.update({
-        where: {
-          id: game.id,
-        },
-        data:{
-          sales:game.sales+1
+        await prisma.cart.delete({
+          where: { id: v.id },
+        });
+        const check = await prisma.order.findFirst({
+          where: {
+            userId: req.user.id,
+            gameId: game.id,
+          },
+        });
+        if (check) {
+          return res.send({ check: false });
         }
-      });
-      return prisma.bill.create({
-        data: {
-          price: game.price,
-          Order: {
-            create: {
-              userId: req.user.id,
-              gameId: game.id,
-              key: key,
+        const update = await prisma.game.update({
+          where: {
+            id: game.id,
+          },
+          data: {
+            sales: game.sales + 1,
+          },
+        });
+        return prisma.bill.create({
+          data: {
+            price: game.price,
+            Order: {
+              create: {
+                userId: req.user.id,
+                gameId: game.id,
+                key: key,
+              },
             },
           },
-        },
-      });
-    }));
+        });
+      })
+    );
 
     console.log(billData);
     return res.send(billData);
@@ -169,7 +223,6 @@ route.post("/cart", async (req, res) => {//ซื้อเกมในตะก�
     });
   }
 });
-
 
 module.exports = route;
 /*const order = await prisma.order.create({
