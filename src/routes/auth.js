@@ -44,62 +44,40 @@ route.post("/", async (req, res) => {
     });
     const htmlForm = `
   <!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Email Verification Success</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background-color: #f8f9fa;
-      margin: 0;
-      padding: 0;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-    }
-    .container {
-      text-align: center;
-      background-color: #fff;
-      padding: 30px;
-      border-radius: 8px;
-      box-shadow: 0px 0px 20px rgba(0, 0, 0, 0.1);
-    }
-    h1 {
-      color: #333;
-      margin-bottom: 10px;
-    }
-    p {
-      color: #666;
-      margin-bottom: 20px;
-    }
-    button {
-      padding: 10px 20px;
-      background-color: #007bff;
-      color: #fff;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-      font-size: 16px;
-      transition: background-color 0.3s ease;
-    }
-    button:hover {
-      background-color: #0056b3;
-    }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <h1>Email Verification Successful</h1>
+  <html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Success</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+      }
+      h1 {
+        color: #333;
+      }
+      button {
+        padding: 10px 20px;
+        background-color: #007bff;
+        color: #fff;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 16px;
+      }
+      button:hover {
+        background-color: #0056b3;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Verification Successful!</h1>
     <p>Your email has been successfully verified.</p>
     <form action="http://localhost:5000/auth/verify/${user.id}/${token.tokenId}" method="get">
-      <button type="submit">Continue</button>
+      <button type="submit">Submit</button>
     </form>
-  </div>
-</body>
-</html>
+  </body>
+  </html>
 `;
     await sendEmail(user.email, "Verify Email", htmlForm);
     return res.send(user);
@@ -192,50 +170,18 @@ route.get("/verify/:id/:token", async (req, res) => {
       },
     });
     const htmlForm = `
-   <!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Email Verification Success</title>
-  <style>
-    body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background-color: #f0f0f0;
-      margin: 0;
-      padding: 0;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-    }
-    .container {
-      text-align: center;
-      background-color: #ffffff;
-      padding: 40px;
-      border-radius: 10px;
-      box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
-    }
-    h1 {
-      color: #333333;
-      margin-bottom: 20px;
-      font-size: 28px;
-      font-weight: bold;
-    }
-    p {
-      color: #666666;
-      margin-bottom: 30px;
-      line-height: 1.6;
-    }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <h1>Email Verification Successful!</h1>
-    <p>Your email has been successfully verified.</p>
-  </div>
-</body>
-</html>
+      <!DOCTYPE html>
+      <html lang="en">
+      <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Reant_Game</title>
+      </head>
+      <body>
+        <h1>Verification Successful!</h1>
+        <p>Your email has been successfully verified.</p>
+      </body>
+      </html>
     `;
     return res.status(200).send(htmlForm);
   } catch (error) {

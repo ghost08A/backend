@@ -72,11 +72,14 @@ route.get("/:id", async (req, res) => {
   }
 });
 
-route.get("/orders", async (req, res) => {
+route.post("/all", async (req, res) => {
   //ดูorder
   const order = await prisma.order.findMany({
     where: { userId: req.user.id },
   });
+  if (order.length === 0) {
+    return res.send("Order not found");
+  }
   console.log(order);
   return res.send(order);
 });
