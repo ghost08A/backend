@@ -11,7 +11,8 @@ function auth(req, res, next) {
   if (authorization) {
     token = authorization.split(" ")[1];
   } else {
-    return res.status(401).send({
+    return res.status(402).send({
+      // token ไม่สมบูรณ์
       error: "token not valid5",
     });
   }
@@ -22,6 +23,7 @@ function auth(req, res, next) {
     next();
   } catch (error) {
     return res.status(401).send({
+      // ถอด token ไม่ได้
       error: "token not valid4",
     });
   }
