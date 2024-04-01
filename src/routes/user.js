@@ -354,7 +354,7 @@ route.patch("/update", async (req, res) => {
     });
 
     return res.send(report);//ส่งข้อมูลreportกลับไป
-  } catch (report) {//ตรวจสอบข้อผิดพลาดจากการรับข้อมูลมาถ้ามีerrorให้แสดงerror
+  } catch (error) {//ถ้ามีerrorให้ส่งerrorกลับไป
     console.log(error);
     return res.send(error);
   }

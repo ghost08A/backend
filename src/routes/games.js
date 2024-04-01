@@ -297,7 +297,7 @@ route.patch("/", auth, async (req, res) => {
     });
 
     return res.send(updated);//ส่งข้อมูลใหม่กลับไป
-  } catch (e) {////ถ้ามี error ให้แสดง error
+  } catch (e) {//ถ้ามี error ให้แสดง error
     if (e instanceof Prisma.PrismaClientKnownRequestError) {
       if (e.meta.target) {
         return res.status(400).send({

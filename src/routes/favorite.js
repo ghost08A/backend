@@ -7,11 +7,12 @@ const route = Router();
 
 route.get("/", async (req, res) => { //ดูเกมที่กดชอบไว้
     try {
+      //ค้นหาเกมที่ชอบผ่านId
       const favorite = await prisma.favorite.findMany({
         where: { userId: req.user.id },
       });
-      return res.send(favorite);
-    } catch (e) {
+      return res.send(favorite);//ส่งข้อมูลเมที่ชอบทั้งหมดกลับไป
+    } catch (e) {//ถ้ามีerrorให้ส่งerrorกลับไป
       console.log(e);
       return res.status(500).send({
         error: "Internal Service Error",
@@ -20,12 +21,12 @@ route.get("/", async (req, res) => { //ดูเกมที่กดชอบ�
   });
 
 route.post("/", async (req, res) => {//เพิ่มเกมที่ชอบ
-  const schema = Joi.object({
+  const schema = Joi.object({//กำหนดข้อมูลที่จะรับมา
     gameId: Joi.number().required(),
   })
   const {error,value} = schema.validate(req.body)
 
-  if(error){
+  if(error){//ตรวจสอบข้อผิดพลาดจากการรับข้อมูลมาถ้ามีerrorให้แสดงerror
     return res.status(400).send({error: "Invalid body"});
   }
   const check = await prisma.favorite.findFirst({
