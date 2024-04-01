@@ -29,15 +29,16 @@ route.post("/", async (req, res) => {//เพิ่มเกมที่ชอ�
   if(error){//ตรวจสอบข้อผิดพลาดจากการรับข้อมูลมาถ้ามีerrorให้แสดงerror
     return res.status(400).send({error: "Invalid body"});
   }
+  //ดูว่ามีเกมที่จะชอบมีอยู่แล้วหรือไม่
   const check = await prisma.favorite.findFirst({
     where:{userId:req.user.id,
     gameId:value.gameId}
   })
   console.log(req.user.id);
-  if(check){
+  if(check){//ถ้ามีเกมที่จะชอบมีอยู่แล้วให้ส่งกลับไปเป็นfalse
     return res.send({error: false})
   }
-  try {
+  try {//เพิ่มเกมที่ชอบลงfavorite
     const favorite = await prisma.favorite.create({
         data:{ 
             gameId: value.gameId,
@@ -45,8 +46,8 @@ route.post("/", async (req, res) => {//เพิ่มเกมที่ชอ�
         }
     })
     console.log(favorite);
-    return res.send(favorite);
-  } catch (error) {
+    return res.send(favorite);//ส่งข้มมูลเกมที่favoriteกลับไป
+  } catch (error) {//ถ้ามี error ให้แสง error
     console.log(e);
     if (e instanceof Prisma.PrismaClientKnownRequestError) {
       if (e.meta.target) {
@@ -64,15 +65,15 @@ route.post("/", async (req, res) => {//เพิ่มเกมที่ชอ�
 });
 
 route.delete("/", async (req, res) => {//ลบเกมที่ชอบ
-    const schema = Joi.object({
+    const schema = Joi.object({//กำหนดข้อมูลที่จะรับมา
         gameId: Joi.number().required(),
       }).required();
       const { error, value } = schema.validate(req.body);
       
-      if (error) {
+      if (error) {//ตรวจสอบข้อผิดพลาดจากการรับข้อมูลมาถ้ามีerrorให้แสดงerror
         return res.status(400).send({ error: "Invalid body" });
       }
-      try { 
+      try { //ลบเกมจากId favoriteที่รับมาของuser
         const favorite = await prisma.favorite.deleteMany({
           where: {
             userId: req.user.id,
@@ -80,8 +81,8 @@ route.delete("/", async (req, res) => {//ลบเกมที่ชอบ
           },
         });
         console.log(favorite);
-        return res.send(favorite);
-      } catch (error) {
+        return res.send(favorite);//ส่งข้อมูลfavoriteกลับไป
+      } catch (error) {//ถ้ามี error ให้แสดง error
         if (error instanceof Prisma.PrismaClientInitializationError) {
           if (error.mata.target) {
             return res.status(400).send({
