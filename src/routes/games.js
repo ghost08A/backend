@@ -22,11 +22,10 @@ route.get("/", async (req, res) => {
     });
     if (authorization) {
       const id = gettoken(authorization);
+      console.log(id);
+    } 
       return res.send(games);
-    } else {
-      console.log(authorization);
-      return res.send(games);
-    }
+    
   } catch (e) {
     return res.status(500).send({
       error: "Internal Service Error",
@@ -43,11 +42,9 @@ route.get("/s", async (req, res) => {
     });
     if (authorization) {
       const id = gettoken(authorization);
+      console.log(id);
+    } 
       return res.send(games);
-    } else {
-      console.log(authorization);
-      return res.send(games);
-    }
   } catch (e) {
     return res.status(500).send({
       error: "Internal Service Error",
@@ -55,8 +52,7 @@ route.get("/s", async (req, res) => {
   }
 });
 
-route.get("/:id", async (req, res) => {
-  //ดูเกม
+route.get("/:id", async (req, res) => { //ดูเกม
   const schema = Joi.number().required();
   const { authorization } = req.headers;
   const { error, value } = schema.validate(req.params.id);
@@ -66,7 +62,6 @@ route.get("/:id", async (req, res) => {
       error: "Invalid id",
     });
   }
-
   try {
     const game = await prisma.game.findUnique({
       where: {
@@ -74,20 +69,16 @@ route.get("/:id", async (req, res) => {
         publish: true,
       },
     });
-
     if (!game) {
       return res.status(404).send({
         error: "Game not found",
       });
     }
-
     if (authorization) {
       const id = gettoken(authorization);
-      return res.send({ game });
-    } else {
-      //console.log(authorization);
-      return res.send({ game });
-    }
+      console.log(id);
+    } 
+    return res.send(game);
   } catch (e) {
     console.log(e);
     return res.status(500).send({
@@ -124,12 +115,9 @@ route.get("/search/:name", async (req, res) => {
     }
     if (authorization) {
       const id = gettoken(authorization);
-
-      return res.send(game);
-    } else {
-      console.log(authorization);
-      return res.send(game);
+      console.log(id);
     }
+      return res.send(game);
   } catch (e) {
     console.log(e);
     return res.status(500).send({
@@ -140,7 +128,7 @@ route.get("/search/:name", async (req, res) => {
 
 route.get("/category/:category", async (req, res) => {
   //category
-  const schema = Joi.string()
+  const schema = Joi.string() //กำหนดข้อมูล
     .valid(
       "Action",
       "Adventure",
@@ -154,15 +142,15 @@ route.get("/category/:category", async (req, res) => {
     .required();
 
   const { error, value } = schema.validate(req.params.category);
-  const { authorization } = req.headers;
-  if (error) {
+  const { authorization } = req.headers; //รับ authorization จาก req.headers
+  if (error) {//ตรวจสอบข้อผิดพลาดจากการรับข้อมูลมาถ้ามีerrorให้แสดงerror
     return res.status(400).send({
       error: "Invalid category",
     });
   }
 
   try {
-    const game = await prisma.game.findMany({
+    const game = await prisma.game.findMany({//ค้นหาเกมตามประเภทที่กรอก
       where: {
         AND: [
           {
@@ -175,20 +163,18 @@ route.get("/category/:category", async (req, res) => {
       },
     });
 
-    if (!game || game.length === 0) {
+    if (!game || game.length === 0) {//ถ้าไ่ม่เจอเกมให้แสดงว่าไม่พบเกม
       return res.status(404).send({
         error: "Games not found in this category",
       });
     }
 
-    if (authorization) {
+    if (authorization) { //ถ้ามีauthorizationให้log id
       const id = gettoken(authorization);
+      console.log(id);
+    } 
       return res.send(game);
-    } else {
-      console.log(authorization);
-      return res.send(game);
-    }
-  } catch (e) {
+  } catch (e) { //ถ้ามี error ให้แสง error
     console.log(e);
     return res.status(500).send({
       error: "Internal Service Error",
@@ -198,7 +184,7 @@ route.get("/category/:category", async (req, res) => {
 
 route.post("/", auth, async (req, res) => {
   //สร้างเกม
-  const schema = Joi.object({
+  const schema = Joi.object({ //กำหนดข้อมูลที่จะรับมา
     name: Joi.string().required(),
     release: Joi.date().required(),
     price: Joi.number().required(),
@@ -223,14 +209,14 @@ route.post("/", auth, async (req, res) => {
 
   console.log(value);
 
-  if (error) {
+  if (error) {//ตรวจสอบข้อผิดพลาดจากการรับข้อมูลมาถ้ามีerrorให้แสดงerror
     return res.status(400).send({
       error: "Invalid body",
     });
   }
 
   try {
-    const game = await prisma.game.create({
+    const game = await prisma.game.create({//สร้างเกมจากข้อมูลที่รับมา
       data: {
         ...value, // ใช้ spread operator เพื่อนำค่าข้อมูลจาก value มาสร้าง
         User: {
@@ -239,8 +225,8 @@ route.post("/", auth, async (req, res) => {
       },
     });
 
-    return res.send(game);
-  } catch (e) {
+    return res.send(game);//ส่งข้อมูลเกมทั้งหมดกลับไป
+  } catch (e) {//ถ้ามี error ให้แสง error
     console.log(e);
     if (e instanceof Prisma.PrismaClientKnownRequestError) {
       if (e.meta.target) {
@@ -259,10 +245,10 @@ route.post("/", auth, async (req, res) => {
 
 route.patch("/", auth, async (req, res) => {
   //แก้ไขเกม
-  if (req.user.role !== "ADMIN") {
+  if (req.user.role !== "ADMIN") { //เช็คสิทธิ์การเข้าถึงข้อมูล
     return res.send({ error: "You are not allowed to" });
   }
-  const schema = Joi.object({
+  const schema = Joi.object({ //กำหนดข้อมูลที่จะรับมา
     id: Joi.number().required(),
     name: Joi.string().required(),
     release: Joi.date().required(),
@@ -285,33 +271,33 @@ route.patch("/", auth, async (req, res) => {
 
   const { error, value } = schema.validate(req.body);
 
-  if (error) {
+  if (error) { //ตรวจสอบข้อผิดพลาดจากการรับข้อมูลมาถ้ามีerrorให้แสดงerror
     console.log(error);
     return res.status(400).send({ error: "Invalid body" });
   }
 
-  const game = await prisma.game.findUnique({
+  const game = await prisma.game.findUnique({//ค้นหาเกมที่จะแก้ไข
     where: {
       id: value.id,
     },
   });
   console.log(value);
-  if (!game) {
+  if (!game) {//ถ้าไม่พบเกมให้ส่งว่าไม่พบเกม
     return res.status(404).send({
       error: "Game not found",
     });
   }
 
   try {
-    const updated = await prisma.game.update({
+    const updated = await prisma.game.update({//updatedข้อมูลจากที่รับมา
       where: {
         id: game.id,
       },
       data: value,
     });
 
-    return res.send(updated);
-  } catch (e) {
+    return res.send(updated);//ส่งข้อมูลใหม่กลับไป
+  } catch (e) {////ถ้ามี error ให้แสดง error
     if (e instanceof Prisma.PrismaClientKnownRequestError) {
       if (e.meta.target) {
         return res.status(400).send({
@@ -329,39 +315,40 @@ route.patch("/", auth, async (req, res) => {
 
 route.delete("/", auth, async (req, res) => {
   //ลบเกม
-  const schema = Joi.object({
+  const schema = Joi.object({//กำหนดข้อมูลที่จะรับมา
     gameId: Joi.number().required(),
   }).required();
 
   const { error, value } = schema.validate(req.body);
-  if (req.user.role !== "ADMIN") {
+  if (req.user.role !== "ADMIN") {//เช็คสิทธิ์การเข้าถึงข้อมูล
     return res.send({ error: "You are not allowed to" });
   }
-  if (error) {
+
+  if (error) {//ตรวจสอบข้อผิดพลาดจากการรับข้อมูลมาถ้ามีerrorให้แสดงerror
     return res.status(400).send({ error: "Invalid body" });
   }
 
   try {
-    const game = await prisma.game.findUnique({
+    const game = await prisma.game.findUnique({//ค้นหาเกมที่จะลบ
       where: {
         id: value.gameId,
       },
     });
 
-    if (!game) {
+    if (!game) {//ถ้าไม่พบเกมให้ส่งว่าไม่พบเกม
       return res.status(404).send({
         error: "Game not found",
       });
     }
 
-    const removed = await prisma.game.delete({
+    const removed = await prisma.game.delete({//ลบเกมจากIdเกมที่ส่งมา
       where: {
         id: value.gameId,
       },
     });
 
-    return res.send(removed);
-  } catch (e) {
+    return res.send(removed);//ส่งข้อมูลเกมที่ลบกลับไป
+  } catch (e) {//ถ้ามี error ให้แสง error
     return res.status(500).send({
       error: "Internal Server Error",
     });
@@ -370,21 +357,21 @@ route.delete("/", auth, async (req, res) => {
 
 route.patch("/confirm", auth, async (req, res) => {
   //ยืนยันเกม
-  const schema = Joi.object({
+  const schema = Joi.object({//กำหนดข้อมูลที่จะรับมา
     gameId: Joi.number().required(),
   }).required();
 
   const { error, value } = schema.validate(req.body);
-  if (req.user.role !== "ADMIN") {
+  if (req.user.role !== "ADMIN") {//เช็คสิทธิ์การเข้าถึงข้อมูล
     return res.send({ error: "You are not allowed to" });
   }
 
-  if (error) {
+  if (error) {//ตรวจสอบข้อผิดพลาดจากการรับข้อมูลมาถ้ามีerrorให้แสดงerror
     return res.status(400).send({ error: "Invalid body" });
   }
 
   try {
-    const update = await prisma.game.update({
+    const update = await prisma.game.update({//ยืนยันเกมจากIdเกมที่ส่งมา
       where: {
         id: value.gameId,
       },
@@ -393,8 +380,8 @@ route.patch("/confirm", auth, async (req, res) => {
       },
     });
 
-    return res.send(update);
-  } catch (error) {
+    return res.send(update);//ส่งข้อมูลเกมที่ยืนยันกลับไป
+  } catch (error) {//ถ้ามี error ให้แสง error
     console.log(error);
     return res.send(error);
   }
