@@ -10,7 +10,7 @@ const SECRET = process.env.SECRET;
 const route = Router();
 
 route.post("/", async (req, res) => {
-  const schema = Joi.object({
+  const schema = Joi.object({//กำหนดข้อมูลที่จะรับมา
     name: Joi.string().required(),
     username: Joi.string().required(),
     password: Joi.string().required(),
@@ -20,15 +20,15 @@ route.post("/", async (req, res) => {
 
   const { error, value } = schema.validate(req.body);
 
-  const passwordhash = await bcrypt.hash(value.password, 10);
+  const passwordhash = await bcrypt.hash(value.password, 10);//hash password
   //console.log(error);
-  if (error) {
+  if (error) {//ตรวจสอบข้อผิดพลาดจากการรับข้อมูลมาถ้ามีerrorให้แสดงerror
     return res.status(400).send({
       error: "Invalid body",
     });
   }
 
-  try {
+  try {//create user
     const user = await prisma.user.create({
       //create
       data: {
@@ -37,11 +37,12 @@ route.post("/", async (req, res) => {
       },
     });
     const token = await prisma.tokenemail.create({
-      data: {
+      data: {//สร้าง token ในตาราง tokenemail 
         userId: user.id,
         tokenId: crypto.randomBytes(32).toString("hex"),
       },
     });
+//สร้างฟรอมยืนยันemail html เก็บไว้ใน htmlForm
     const htmlForm = `
   <!DOCTYPE html>
   <html lang="en">
@@ -78,10 +79,10 @@ route.post("/", async (req, res) => {
     </form>
   </body>
   </html>
-`;
+`;// ส่ง email ยืนยันเข้าไปให้ emailของuser
     await sendEmail(user.email, "Verify Email", htmlForm);
     return res.send(user);
-  } catch (e) {
+  } catch (e) {//ถ้ามี error ให้แสดง error
     if (e instanceof Prisma.PrismaClientKnownRequestError) {
       let targetField;
 
@@ -102,57 +103,63 @@ route.post("/", async (req, res) => {
 
 route.post("/login", async (req, res) => {
   //login
-  const schema = Joi.object({
+  const schema = Joi.object({ //กำหนดข้อมูลที่จะรับมา
     login: Joi.string().required(),
     password: Joi.string().required(),
   }).required();
   const { error, value } = schema.validate(req.body);
   let verify;
   //console.log(value);
-  if (error) {
+  if (error) {//ตรวจสอบข้อผิดพลาดจากการรับข้อมูลมาถ้ามีerrorให้แสดงerror
+    console.log(error);
     return res.status(400).send({
       error: "Invalid body",
     });
   }
+  //ค้นหาขอมูลของuserผ่าน username หรือ email
   let { login, password } = value;
   const existingUser = await prisma.user.findFirst({
     where: { OR: [{ username: login }, { email: login }] },
   });
 
-  if (existingUser) {
+  if (existingUser) {//หาข้อมูล verify email ของ user
     verify = await prisma.tokenemail.findFirst({
       where: { userId: existingUser.id },
     });
   }
-  if (existingUser && !verify) {
+
+  if (existingUser && !verify) {//เช็คว่ามี user กับ verify emailแล้วหรือไม่
+    //ตรวจสอบรหัสผ่านในdatabaseกับที่กรอกมาตรงกันมั้ย 
     if (bcrypt.compareSync(password, existingUser.password)) {
-      const token = jwt.sign(
+      const token = jwt.sign(//สร้าง token
         { id: existingUser.id, role: existingUser.role },
         SECRET
       );
 
       return res.send({ token, id: existingUser.id, role: existingUser.role });
-    } else {
+    } else {//ถ้ามีข้อผิดพลาดให้แสดงว่าข้อมีลผิดพลาด
       return res.send({ error: "Invalid credentials" });
     }
   } else {
     return res.send({ error: "Invalid credentials" });
   }
+  return res.send({ error: "Invalid credentials" });
 });
 
 route.get("/verify/:id/:token", async (req, res) => {
-  const schema = Joi.object({
+  const schema = Joi.object({//กำหนดข้อมูลที่จะรับมา
     id: Joi.string().required(),
     token: Joi.string().required(),
   }).required();
   const { error, value } = schema.validate(req.params);
-  if (error) {
+  if (error) {//ถ้ามี error ให้แสดง error
     return res.status(400).send({
       error: "Invalid parameters",
     });
   }
 
   try {
+    //หาtokenของuser
     const token = await prisma.tokenemail.findFirst({
       where: {
         AND: [
@@ -161,14 +168,14 @@ route.get("/verify/:id/:token", async (req, res) => {
         ],
       },
     });
-
+    //ถ้าไม่มี token ให้ส่งข้อความกลับไปแจ้งเตือน
     if (!token) return res.status(400).send("Invalid link");
-
+    //ลบ token ในตาราง tokenemail
     await prisma.tokenemail.deleteMany({
       where: {
         userId: parseInt(req.params.id),
       },
-    });
+    });//สร้างฟรอมแจ้งเตือน html เก็บไว้ใน htmlForm
     const htmlForm = `
       <!DOCTYPE html>
       <html lang="en">
@@ -182,9 +189,9 @@ route.get("/verify/:id/:token", async (req, res) => {
         <p>Your email has been successfully verified.</p>
       </body>
       </html>
-    `;
+    `;//สง htmlForm กลับไป
     return res.status(200).send(htmlForm);
-  } catch (error) {
+  } catch (error) {//ถ้ามี error ให้แสดง error
     return res.send({ error: error });
   }
 });
