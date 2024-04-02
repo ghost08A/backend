@@ -3,7 +3,7 @@ const { Router } = require("express");
 const { prisma } = require("../lib/prisma");
 const { Prisma } = require("@prisma/client");
 
-const route = Router();
+const route = Router();//require ฟังก์ชั่นทั้งหมดที่ต้องใช้
 
 route.get("/", async (req, res) => { //ดูเกมที่กดชอบไว้
     try {
