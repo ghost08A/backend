@@ -7,7 +7,8 @@ const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
 const sendEmail = require("./sendmail");
 const SECRET = process.env.SECRET;
-const route = Router();
+const route = Router();//require ฟังก์ชั่นที่ต้องใช้ทั้งหมด
+
 
 route.post("/", async (req, res) => {
   const schema = Joi.object({//กำหนดข้อมูลที่จะรับมา
@@ -189,7 +190,7 @@ route.get("/verify/:id/:token", async (req, res) => {
         <p>Your email has been successfully verified.</p>
       </body>
       </html>
-    `;//สง htmlForm กลับไป
+    `;//ส่ง htmlForm กลับไป
     return res.status(200).send(htmlForm);
   } catch (error) {//ถ้ามี error ให้แสดง error
     return res.send({ error: error });

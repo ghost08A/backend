@@ -12,7 +12,6 @@ const route = Router();
 
 route.get("/allUser", async (req, res) => {
   //ดูผู้ใช้ทั้งหมด
-
   if (req.user.role !== "ADMIN") {//เช็คสิทธิ์การเข้าถึง
     return res.send({ error: "You are not allowed to" });
   }
@@ -83,7 +82,6 @@ route.patch("/information", async (req, res) => {
         },
       },
     });
-
     const checkemail = await prisma.user.findFirst({
       where: {
         email: value.email,
@@ -92,7 +90,6 @@ route.patch("/information", async (req, res) => {
         },
       },
     });
-
     const checktel = await prisma.user.findFirst({
       where: {
         tel: value.tel,
@@ -101,12 +98,10 @@ route.patch("/information", async (req, res) => {
         },
       },
     });
-
     if (checkusername) {
       console.log(checkusername);
       return res.send({ error: "There is duplicate username" });
     }
-
     if (checkemail) {
       console.log(checkemail);
       return res.send({ error: "There is duplicate email" });
@@ -115,7 +110,6 @@ route.patch("/information", async (req, res) => {
       console.log(checktel);
       return res.send({ error: "There is duplicate phone" });
     }
-
     if (!user) {//ดูว่ามีuserที่จะแก้ไขมั้ย
       return res.status(404).send({
         error: "user not found",
