@@ -1,6 +1,6 @@
 const cors = require("cors");
 const express = require("express");
-const auth = require("./middleware/auth");ห
+const auth = require("./middleware/auth");
 require("dotenv/config");
 
 const server = express(); //สร้าง instance ของ Express server

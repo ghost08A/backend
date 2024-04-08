@@ -233,9 +233,8 @@ route.post("/cart", async (req, res) => {
         });
       })
     );
-
     console.log(billData);
-    return res.send(billData);//ส่งbill Id ทั้งหมดกลับไป
+    return res.send(billData);//ส่งbill ทั้งหมดกลับไป
   } catch (e) {//ถ้ามีerrorให้ส่งerrorกลับไป
     console.log(e);
     if (e instanceof Prisma.PrismaClientKnownRequestError) {
